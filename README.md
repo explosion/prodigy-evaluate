@@ -11,13 +11,13 @@ This repository contains a Prodigy plugin for recipes to evaluate spaCy pipeline
 Here's a preview of the `evaluate` recipe with some availabile parameters in the terminal:
 
 <p align="center">
-  <img src="images/evaluate.gif" width="50%">
+  <img src="images/evaluate.gif">
 </p>
 
 You can install this plugin via `pip`. 
 
 ```
-pip install "prodigy-evaluate @ git+https://github.com/explosion/prodigy-evaluate.git@2_setup"
+pip install "prodigy-evaluate @ git+https://github.com/explosion/prodigy-evaluate"
 ```
 
 To learn more about this plugin and additional functionality, you can check the [Prodigy docs](https://prodi.gy/docs/plugins/#evaluate).
