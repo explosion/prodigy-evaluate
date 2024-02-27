@@ -6,6 +6,8 @@ from spacy.training import Example
 import en_core_web_sm
 
 from prodigy.components.db import Database
+from prodigy.types import TaskType
+
 from prodigy_evaluate import (
     _display_eval_results,
     _get_score_for_metric,
@@ -16,7 +18,6 @@ from prodigy_evaluate import (
     _get_predicted_labels,
     _get_cf_actual_predicted,
 )
-from prodigy.types import TaskType
 
 @pytest.fixture
 def nlp():
@@ -239,6 +240,7 @@ def test_get_actual_labels_textcat(textcat_examples):
     assert all(isinstance(label, str) for label in textcat_labels)
     
 #here we need a model as we're using one in _get_predicted_labels
+#because nlp.evaluate does not create example.predicted values 
 def test_get_predicted_labels_ner(nlp, ner_examples):
     
     pred_ner_labels = _get_predicted_labels(nlp, ner_examples, "ner")
