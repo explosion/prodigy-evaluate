@@ -19,9 +19,10 @@ from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
 
 from .utils import get_datasets_from_cli_eval, merge_corpus
 
-#additional imports
+# additional imports
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+
 
 @recipe(
     "evaluate",
@@ -101,7 +102,7 @@ def evaluate(
     merged_corpus = merge_corpus(nlp, compat_pipes)
     dev_examples = merged_corpus["dev"](nlp)
     scores = nlp.evaluate(dev_examples)
-        
+
     if label_stats:
         _display_eval_results(scores, spans_key=spans_key, silent=silent)
 
@@ -112,13 +113,18 @@ def evaluate(
             )
         actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
             nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
-        )        
+        )
         cfarray, labels = _create_cf_array(
-            actual_labels=actual_labels, predicted_labels=predicted_labels, labels=labels)
-        _display_confusion_matrix(actual_labels=actual_labels, 
-                                  predicted_labels=predicted_labels, 
-                                  labels=labels)
-            
+            actual_labels=actual_labels,
+            predicted_labels=predicted_labels,
+            labels=labels,
+        )
+        _display_confusion_matrix(
+            actual_labels=actual_labels,
+            predicted_labels=predicted_labels,
+            labels=labels,
+        )
+
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
@@ -127,18 +133,19 @@ def evaluate(
         actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
             nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
         )
-        #save confusion matrix array to file
+        # save confusion matrix array to file
         if not cf_path.exists():
             os.makedirs(cf_path)
         cfarray, labels = _create_cf_array(actual_labels, predicted_labels, labels)
-        
+
         full_cf_path = cf_path / "cf_array.json"
         srsly.write_json(
             full_cf_path,
             {
                 "cf_array": cfarray,
                 "labels": labels,
-            })
+            },
+        )
         msg.good(f"Confusion matrix array saved to {full_cf_path}")
 
     return scores
@@ -356,6 +363,7 @@ def _display_eval_results(
 
 #### Confusion matrix functions ####
 
+
 def _get_actual_labels(dev_examples: Iterable[Example], pipe_key: str) -> List[Any]:
     """Returns the actual labels for the specified component.
 
@@ -368,16 +376,20 @@ def _get_actual_labels(dev_examples: Iterable[Example], pipe_key: str) -> List[A
     """
     actual_labels = []
     for ex in dev_examples:
-        ref = ex.reference #we have reference but we don't have predicted
+        ref = ex.reference  # we have reference but we don't have predicted
         if pipe_key == "ner":
             ents = ex.get_aligned_ner()
-            ents_clean = ['O' if x is None else x for x in ents]
+            ents_clean = ["O" if x is None else x for x in ents]
             actual_labels.extend([ent.split("-")[-1] for ent in ents_clean])
-        elif (pipe_key == "textcat"):
+        elif pipe_key == "textcat":
             text_labels = ref.cats
-            most_likely_class = max(text_labels, key=lambda k: text_labels[k]) if text_labels != {} else 'O'
+            most_likely_class = (
+                max(text_labels, key=lambda k: text_labels[k])
+                if text_labels != {}
+                else "O"
+            )
             actual_labels.append(most_likely_class)
-        
+
     return actual_labels
 
 
@@ -401,13 +413,18 @@ def _get_predicted_labels(
         if pipe_key == "ner":
             ents = [(ent.start_char, ent.end_char, ent.label_) for ent in eg.ents]
             biluo_tags = offsets_to_biluo_tags(eg, ents)
-            pred_labels.extend([tag.split("-")[-1] for tag in biluo_tags])                
-        elif (pipe_key == "textcat"):
+            pred_labels.extend([tag.split("-")[-1] for tag in biluo_tags])
+        elif pipe_key == "textcat":
             text_labels = eg.cats
-            most_likely_class = max(text_labels, key=lambda k: text_labels[k]) if text_labels != {} else 'O'
+            most_likely_class = (
+                max(text_labels, key=lambda k: text_labels[k])
+                if text_labels != {}
+                else "O"
+            )
             pred_labels.append(most_likely_class)
 
     return pred_labels
+
 
 def _get_cf_actual_predicted(
     nlp: Language, dev_examples: Iterable[Example], pipe_key: str
@@ -424,15 +441,17 @@ def _get_cf_actual_predicted(
     """
 
     actual_labels = [label for label in _get_actual_labels(dev_examples, pipe_key)]
-    predicted_labels = [label for label in _get_predicted_labels(nlp, dev_examples, pipe_key)]
+    predicted_labels = [
+        label for label in _get_predicted_labels(nlp, dev_examples, pipe_key)
+    ]
     labels = set(predicted_labels).union(set(actual_labels))
 
     return actual_labels, predicted_labels, list(labels)
 
 
-def _create_cf_array(actual_labels: List[Any], 
-                     predicted_labels: List[Any],
-                     labels: List[Any]) -> Tuple[List[List[float]], List[Any]]:
+def _create_cf_array(
+    actual_labels: List[Any], predicted_labels: List[Any], labels: List[Any]
+) -> Tuple[List[List[float]], List[Any]]:
     """Creates the confusion matrix array for the specified component.
 
     Args:
@@ -444,25 +463,25 @@ def _create_cf_array(actual_labels: List[Any],
         Tuple[List[List[float]], List[Any]]: Tuple containing the confusion matrix array and labels
     """
     labels_to_include = [l for l in labels if l != "O"]
-    cm = confusion_matrix(actual_labels, 
-                          predicted_labels, 
-                          labels=labels_to_include,
-                          normalize="true")
-    
+    cm = confusion_matrix(
+        actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
+    )
+
     return cm, labels_to_include
 
-def _display_confusion_matrix(actual_labels: List[Any], 
-                              predicted_labels: List[Any], 
-                              labels: List[Any]):
+
+def _display_confusion_matrix(
+    actual_labels: List[Any], predicted_labels: List[Any], labels: List[Any]
+):
     """Displays the confusion matrix for the specified component.
 
     Args:
         actual_labels (List[Any]): List of actual labels.
         predicted_labels (List[Any]): List of predicted labels.
         labels (List[Any]): List of labels.
-    """  
+    """
     cm, labels = _create_cf_array(actual_labels, predicted_labels, labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
     disp.plot()
     msg.divider("Confusion Matrix")
-    plt.show(block=False)        
+    plt.show(block=False)

@@ -1,29 +1,21 @@
-
-from typing import (
-    Dict, 
-    Tuple, 
-    Callable, 
-    Iterable, 
-    List,
-    Union,
-    Sequence)
+from typing import Dict, Tuple, Callable, Iterable, List, Union, Sequence
 
 from functools import partial
 
-#spacy imports
+# spacy imports
 from spacy import Language
 from spacy.training.example import Example
 from spacy.tokens.doc import SetEntsDefault
 from spacy.tokens import Doc
 from spacy.cli._util import string_to_list
 
-#prodigy imports
+# prodigy imports
 from prodigy.errors import RecipeError
 from prodigy.util import (
     EVAL_PREFIX,
     NER_DEFAULT_INCORRECT_KEY,
     SPANCAT_DEFAULT_KEY,
-    COREF_DEFAULT_PREFIX
+    COREF_DEFAULT_PREFIX,
 )
 from prodigy.recipes.data_utils import (
     get_datasets_from_cli,
@@ -34,8 +26,9 @@ from prodigy.recipes.data_utils import (
     create_senter_reader,
     create_spancat_reader,
     create_coref_reader,
-    create_merged_corpus
+    create_merged_corpus,
 )
+
 
 def merge_corpus(
     nlp: Language,
@@ -113,6 +106,7 @@ def merge_data(
     train_docs = [eg.reference for eg in merged_corpus["train"](nlp)]
     dev_docs = [eg.reference for eg in merged_corpus["dev"](nlp)]
     return train_docs, dev_docs, pipes
+
 
 def get_datasets_from_cli_eval(
     ner: Union[Sequence[str], str],
