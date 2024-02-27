@@ -2,7 +2,14 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (Any, 
+                    Dict, 
+                    Iterable, 
+                    List, 
+                    Optional, 
+                    Sequence, 
+                    Tuple, 
+                    Union)
 
 import spacy
 import srsly
@@ -124,6 +131,7 @@ def evaluate(
             predicted_labels=predicted_labels,
             labels=labels,
         )
+        msg.good(f"Confusion matrix displayed")
 
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
@@ -483,5 +491,4 @@ def _display_confusion_matrix(
     cm, labels = _create_cf_array(actual_labels, predicted_labels, labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
     disp.plot()
-    msg.divider("Confusion Matrix")
-    plt.show(block=False)
+    plt.show()

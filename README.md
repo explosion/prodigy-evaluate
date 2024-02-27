@@ -4,24 +4,15 @@
 
 This repository contains a Prodigy plugin for recipes to evaluate spaCy pipelines. It features two recipes:
 
-1. `evaluate`: This recipe evaluates a spaCy pipeline on a dataset of annotated examples. 
-2. `evaluate-example`:  
+1. `evaluate`: Evaluate a spaCy pipeline on one or more datasets for different components. Per-component evaluation sets can be provided using the `eval:` prefix for consistency. Passing flags like `--label-stats` or `--confusion-matrix` will compute a variety of evaluation metrics, including precision, recall, F1, accuracy, and more. 
 
-It computes a variety of evaluation metrics, including precision, recall, F1, accuracy, and more. It also supports evaluation of named entities, part-of-speech tags, and dependency labels.
+2. `evaluate-example`: Evaluate a spaCy pipeline on one or more datasets for different components on a **per-example basis**. This is helpful for debugging and for understanding the hardest examples for your model. 
 
-Here's a preview of the `evaluate` recipe in the terminal:
+Here's a preview of the `evaluate` recipe with some availabile parameters in the terminal:
 
 <p align="center">
   <img src="images/evaluate.gif" width="50%">
 </p>
-
-
-Here's a preview of the `evaluate-example` recipe in the terminal:
-
-<p align="center">
-  <img src="images/evaluate_example.gif" width="50%">
-</p>
-
 
 You can install this plugin via `pip`. 
 
@@ -29,7 +20,7 @@ You can install this plugin via `pip`.
 pip install "prodigy-evaluate @ git+https://github.com/explosion/prodigy-evaluate.git@2_setup"
 ```
 
-To learn more about this plugin, you can check the [Prodigy docs](https://prodi.gy/docs/plugins/#evaluate).
+To learn more about this plugin and additional functionality, you can check the [Prodigy docs](https://prodi.gy/docs/plugins/#evaluate).
 
 ## Issues? 
 

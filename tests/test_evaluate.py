@@ -205,7 +205,7 @@ def test_evaluate(spacy_model, dataset, db, capsys):
         model=spacy_model,
         ner=dataset,
         label_stats=True,
-        confusion_matrix=True,
+        confusion_matrix=False, #false because you need to exit out of the confusion matrix
     )
 
     captured = capsys.readouterr()
