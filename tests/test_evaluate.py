@@ -5,8 +5,8 @@ import pytest
 from spacy.training import Example
 import en_core_web_sm
 
-from prodigy.components.db import Database
 from prodigy.types import TaskType
+from prodigy.components.db import connect
 
 from prodigy_evaluate import (
     _display_eval_results,
@@ -18,6 +18,14 @@ from prodigy_evaluate import (
     _get_predicted_labels,
     _get_cf_actual_predicted,
 )
+
+@pytest.fixture
+def dataset() -> str:
+    return "test_dataset"
+
+@pytest.fixture
+def spacy_model():
+    return "en_core_web_sm"
 
 @pytest.fixture
 def nlp():
@@ -127,7 +135,8 @@ def scores() -> Dict[str, float]:
 
 
 @pytest.fixture
-def db(database: Database, dataset: str, data: List[TaskType]):
+def db(dataset: str, data: List[TaskType]):
+    database = connect()
     database.add_dataset(dataset)
     database.add_examples(data, datasets=[dataset])
     return database
@@ -175,6 +184,8 @@ def test_evaluate_example(spacy_model, dataset, metric, db, capsys):
     captured = capsys.readouterr()
 
     assert "Scored Example" in captured.out
+    
+    db.drop_dataset(dataset)
 
 
 def test_evaluate(spacy_model, dataset, db, capsys):
@@ -260,16 +271,25 @@ def test_get_cf_actual_predicted(nlp, ner_examples):
     assert 'PERSON' in actual
     assert 'ORG' in predicted
     
-    pass
-
 @pytest.mark.parametrize("actual_labels, predicted_labels, labels, expected_output", [
-    (["O", "O", "SKILL"], ["O", "O", "SKILL"], ["SKILL"], ([[1.0]], ["SKILL"])), #agreement ner
-    (["O", "O", "SKILL"], ["O", "SKILL", "O"], ["SKILL"], ([[0]], ['SKILL'])), #disagreement ner
-    (["CAT", "CAT", "DOG"], ["CAT", "CAT", "DOG"], ["CAT", "DOG"], ([[1.0, 0.0], [0.0, 1.0]], ['CAT', 'DOG'])), #agreement textcat
-    ([1, 1, 0], [1, 0, 1], [1, 0], ([[0.5, 0.5], [1.0, 0.0]], [1, 0]))]) #disagreement textcat
+    (["O", "O", "SKILL"], ["O", "O", "SKILL"], ["SKILL"], ([[1.0]], ["SKILL"])),  # agreement ner
+    (["O", "O", "SKILL"], ["O", "SKILL", "O"], ["SKILL"], ([[0]], ['SKILL'])),  # disagreement ner
+    (["CAT", "CAT", "DOG"], ["CAT", "CAT", "DOG"], ["CAT", "DOG"], ([[1.0, 0.0], [0.0, 1.0]], ['CAT', 'DOG'])),  # agreement textcat
+    ([1, 1, 0], [1, 0, 1], [1, 0], ([[0.5, 0.5], [1.0, 0.0]], [1, 0]))  # disagreement textcat
+])
 def test_create_cf_array(actual_labels, predicted_labels, labels, expected_output):
-    #assert that the function returns the expected output
-    assert _create_cf_array(actual_labels, predicted_labels, labels) == expected_output
-    assert len(expected_output) == 2
-    #assert that all the values are between 0 and 1 
-    assert all(0 <= x <= 1 for row in expected_output[0] for x in row)
+    actual_matrix, actual_labels = _create_cf_array(actual_labels, predicted_labels, labels)
+    expected_matrix, expected_labels = expected_output
+
+    # Compare confusion matrices structure and values
+    for i, row in enumerate(expected_matrix):
+        for j, value in enumerate(row):
+            assert actual_matrix[i][j] == pytest.approx(value), f"Value mismatch at position [{i}][{j}]"
+
+    # Compare labels
+    assert actual_labels == expected_labels, "Labels mismatch"
+
+    # Additional checks can remain the same
+    assert len(actual_matrix) == len(expected_matrix), "Matrix size mismatch"
+    # Assert that all the values are between 0 and 1
+    assert all(0 <= x <= 1 for row in actual_matrix for x in row), "Values in the matrix are not within the [0, 1] range"

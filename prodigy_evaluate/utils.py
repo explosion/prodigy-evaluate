@@ -19,7 +19,7 @@ from spacy.cli._util import string_to_list
 
 #prodigy imports
 from prodigy.errors import RecipeError
-from prodigy.utils import (
+from prodigy.util import (
     EVAL_PREFIX,
     NER_DEFAULT_INCORRECT_KEY,
     SPANCAT_DEFAULT_KEY,

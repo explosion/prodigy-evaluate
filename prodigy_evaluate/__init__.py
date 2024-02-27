@@ -464,6 +464,5 @@ def _display_confusion_matrix(actual_labels: List[Any],
     cm, labels = _create_cf_array(actual_labels, predicted_labels, labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
     disp.plot()
-    
-    plt.show()
-        
+    msg.divider("Confusion Matrix")
+    plt.show(block=False)        
