@@ -277,7 +277,7 @@ def evaluate_example(
     ner=RECIPE_ARGS["ner"],
     gpu_id=RECIPE_ARGS["gpu_id"],
     verbose=RECIPE_ARGS["verbose"],
-    silent=RECIPE_ARGS["silent"],
+    per_label=Arg("--per-label", "-PL", help="Show per-label NER nervaluate scores"),
     # fmt: on
 )
 def evaluate_nervaluate(
@@ -285,7 +285,7 @@ def evaluate_nervaluate(
     ner: Sequence[str],
     gpu_id: int = -1,
     verbose: bool = False,
-    silent: bool = False,
+    per_label: bool = False,
 ):
     """
     Evaluate spaCy's NER component using nervaluate metrics. the `nervaluate` library
@@ -299,10 +299,10 @@ def evaluate_nervaluate(
         prodigy evaluate.nervaluate en_core_web_sm my_eval_dataset
         ```
     """
-    set_log_level(verbose=verbose, silent=silent)
+    set_log_level(verbose=verbose, silent=True) #silence component merging
     setup_gpu(gpu_id)
     nlp = spacy.load(model)
-    merged_corpus = merge_corpus(nlp, {"ner": ([], ner)})
+    merged_corpus = merge_corpus(nlp, {"ner": ([], [ner])})
     dev_examples = merged_corpus["dev"](nlp)
     actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
         nlp=nlp, dev_examples=dev_examples, pipe_key="ner"
@@ -317,7 +317,7 @@ def evaluate_nervaluate(
     msg.text("NER: Overall")
     _create_ner_table(ner_results)
 
-    if not silent:
+    if per_label:
         for tag, tag_results in ner_results_by_tag.items():
             if tag != "O":
                 msg.text(title=f"NER: {tag}")

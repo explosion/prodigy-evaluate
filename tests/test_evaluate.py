@@ -269,7 +269,7 @@ def test_evaluate(spacy_model, dataset, db, capsys):
 def test_nervaluate(spacy_model, dataset, db, capsys):
     results = evaluate_nervaluate(
         model=spacy_model,
-        dataset=dataset,
+        ner=dataset,
     )
     captured = capsys.readouterr()
     
