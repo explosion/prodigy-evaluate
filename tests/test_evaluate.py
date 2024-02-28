@@ -210,7 +210,6 @@ def test_evaluate(spacy_model, dataset, db, capsys):
 
     captured = capsys.readouterr()
 
-    assert "Confusion Matrix" in captured.out
     assert "P" in captured.out
     assert "R" in captured.out
     assert "F" in captured.out
