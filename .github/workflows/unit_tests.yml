@@ -15,28 +15,25 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
-          cache: "pip" # caching pip dependencies
+          cache: "pip"
 
-      - name: Check out Prodigy
-        uses: actions/checkout@v3
-        with:
-          repository: explosion/prodigy
-          ref: v1.14.0
-          path: ./prodigy
-          ssh-key: ${{ secrets.GHA_PRODIGY_READ }}
+      # No need to checkout the Prodigy repository separately
 
-      - name: Install prodigy
+      - name: Install Prodigy from private repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHA_PRODIGY_READ }} # Use the secret here
         run: |
-          ls -la
-          pip install ./prodigy
+          pip install --upgrade pip
+          pip install git+https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git@v1.14.0
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
           pip install -e .
           pip install pytest
+          python -m spacy download en_core_web_sm
       
       - name: Run pytest
         if: always()
         shell: bash
         run: python -m pytest tests
+      
