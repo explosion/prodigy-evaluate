@@ -274,7 +274,7 @@ def evaluate_example(
     "evaluate.nervaluate",
     # fmt: off
     model=Arg(help="Path to model to evaluate"),
-    dataset=Arg(help="Name of the dataset to evaluate"),
+    ner=RECIPE_ARGS["ner"],
     gpu_id=RECIPE_ARGS["gpu_id"],
     verbose=RECIPE_ARGS["verbose"],
     silent=RECIPE_ARGS["silent"],
@@ -282,7 +282,7 @@ def evaluate_example(
 )
 def evaluate_nervaluate(
     model: Union[str, Path],
-    dataset: str,
+    ner: Sequence[str],
     gpu_id: int = -1,
     verbose: bool = False,
     silent: bool = False,
@@ -302,7 +302,7 @@ def evaluate_nervaluate(
     set_log_level(verbose=verbose, silent=silent)
     setup_gpu(gpu_id)
     nlp = spacy.load(model)
-    merged_corpus = merge_corpus(nlp, {"ner": ([], [dataset])})
+    merged_corpus = merge_corpus(nlp, {"ner": ([], ner)})
     dev_examples = merged_corpus["dev"](nlp)
     actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
         nlp=nlp, dev_examples=dev_examples, pipe_key="ner"
