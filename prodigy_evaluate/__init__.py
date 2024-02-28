@@ -2,14 +2,7 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (Any, 
-                    Dict, 
-                    Iterable, 
-                    List, 
-                    Optional, 
-                    Sequence, 
-                    Tuple, 
-                    Union)
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import spacy
 import srsly
@@ -31,6 +24,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from nervaluate import Evaluator
 
+
 @recipe(
     "evaluate.evaluate",
     # fmt: off
@@ -47,8 +41,8 @@ from nervaluate import Evaluator
     gpu_id=RECIPE_ARGS["gpu_id"],
     verbose=RECIPE_ARGS["verbose"],
     silent=RECIPE_ARGS["silent"],
-    confusion_matrix = Arg("--confusion-matrix", "-CF",  help="Show confusion matrix for the specified component"),
-    score_path = Arg("--score-path", "-SP", help="Path to save evaluation metrics to. Defaults to None."),
+    cf_matrix = Arg("--confusion-matrix", "-CF",  help="Show confusion matrix for the specified component"),
+    cf_path = Arg("--cf-path", "-CP", help="Path to save the confusion matrix array"),
     spans_key=Arg("--spans-key", help="Optional spans key to evaluate if spancat component is used."),
     # fmt: on
 )
@@ -66,8 +60,8 @@ def evaluate(
     gpu_id: int = -1,
     verbose: bool = False,
     silent: bool = False,
-    confusion_matrix: bool = False,
-    score_path: Optional[Path] = None,
+    cf_matrix: bool = False,
+    cf_path: Optional[Path] = None,
     spans_key: str = SPANCAT_DEFAULT_KEY,
 ) -> Dict[str, Any]:
     """Evaluate a spaCy pipeline on one or more datasets for different components.
@@ -109,57 +103,49 @@ def evaluate(
     merged_corpus = merge_corpus(nlp, compat_pipes)
     dev_examples = merged_corpus["dev"](nlp)
     scores = nlp.evaluate(dev_examples)
-            
-    if label_stats:
-        _display_eval_results(scores, spans_key=spans_key, silent=silent)
-        if pipe_key == "ner":
-            #here, let's use nervaluate
-            actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
-                nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key)
-            evaluator = Evaluator(actual_labels, predicted_labels, tags=labels, loader="list")
-            ner_results, ner_results_by_tag = evaluator.evaluate()
-            scores["nervaluate_results"] = ner_results
-            scores["nervaluate_results_by_tag"] = ner_results_by_tag
-            
-            msg.divider("NER: Overall")
-            _create_ner_table(ner_results)
 
-            if not silent:
-                for tag, tag_results in ner_results_by_tag.items():
-                    msg.divider(f"NER: {tag}")
-                    _create_ner_table(tag_results)   
-                    
-    if confusion_matrix or score_path:
-        actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
+    actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
         nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
-        )
-        if pipe_key == "ner":
-            actual_labels = [label.split("-")[-1] for sublist in actual_labels for label in sublist]
-            predicted_labels = [label.split("-")[-1] for sublist in predicted_labels for label in sublist]
-        cfarray, labels = _create_cf_array(
-            actual_labels=actual_labels,
-            predicted_labels=predicted_labels,
-            labels=labels,
-        )
-        if confusion_matrix:
-                disp = ConfusionMatrixDisplay(confusion_matrix=cfarray, display_labels=labels)
-                disp.plot()
-                plt.show()
-                msg.good(f"Confusion matrix displayed")
+    )
+    labels_to_include = [l for l in labels if l != "O"]
+    if pipe_key == "ner":
+        actual_labels = [
+            label.split("-")[-1] for sublist in actual_labels for label in sublist
+        ]
+        predicted_labels = [
+            label.split("-")[-1] for sublist in predicted_labels for label in sublist
+        ]
 
-        if score_path:
-            if not score_path.exists():
-                os.makedirs(score_path)
+    if label_stats:
+        _display_eval_results(
+            scores=scores, spans_key=spans_key, silent=silent
+        )
 
-            full_scores_path = score_path / "scores.json"
-            scores["cf_array"] = cfarray
-            scores["labels"] = labels
-            
-            srsly.write_json(
-                full_scores_path,
-                scores
+    if cf_matrix or cf_path:
+        cfarray = confusion_matrix(
+            actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
+        )
+        if cf_matrix:
+            disp = ConfusionMatrixDisplay(
+                confusion_matrix=cfarray, display_labels=labels_to_include
             )
-            msg.good(f"Saved scores to to {full_scores_path}")
+            disp.plot()
+            plt.show()
+            msg.good(f"Confusion matrix displayed")
+
+        if cf_path:
+            if not cf_path.exists():
+                os.makedirs(cf_path)
+
+            full_cf_path = cf_path / "cf_array.json"
+            srsly.write_json(
+                full_cf_path,
+                {
+                    "cf_array": cfarray,
+                    "labels": labels,
+                },
+            )
+            msg.good(f"Confusion matrix array saved to {full_cf_path}")
 
     return scores
 
@@ -284,6 +270,62 @@ def evaluate_example(
         )
 
 
+@recipe(
+    "evaluate.nervaluate",
+    # fmt: off
+    model=Arg(help="Path to model to evaluate"),
+    dataset=Arg(help="Name of the dataset to evaluate"),
+    gpu_id=RECIPE_ARGS["gpu_id"],
+    verbose=RECIPE_ARGS["verbose"],
+    silent=RECIPE_ARGS["silent"],
+    # fmt: on
+)
+def evaluate_nervaluate(
+    model: Union[str, Path],
+    dataset: str,
+    gpu_id: int = -1,
+    verbose: bool = False,
+    silent: bool = False,
+):
+    """
+    Evaluate spaCy's NER component using nervaluate metrics. the `nervaluate` library
+    provides full named-entity (i.e. not tag/token) evaluation metrics based on SemEval’13.
+
+    For more information on these metric, see https://github.com/MantisAI/nervaluate.
+
+    Example Usage:
+
+        ```
+        prodigy evaluate.nervaluate en_core_web_sm my_eval_dataset
+        ```
+    """
+    set_log_level(verbose=verbose, silent=silent)
+    setup_gpu(gpu_id)
+    nlp = spacy.load(model)
+    merged_corpus = merge_corpus(nlp, {"ner": ([], [dataset])})
+    dev_examples = merged_corpus["dev"](nlp)
+    actual_labels, predicted_labels, labels = _get_cf_actual_predicted(
+        nlp=nlp, dev_examples=dev_examples, pipe_key="ner"
+    )
+
+    evaluator = Evaluator(actual_labels, predicted_labels, tags=labels, loader="list")
+    ner_results, ner_results_by_tag = evaluator.evaluate()
+    msg.divider("nervaluate NER metrics")
+    msg.info(
+        "Full named-entity (i.e., not tag/token) evaluation metrics based on SemEval’13. For more information on these metrics, see https://github.com/MantisAI/nervaluate"
+    )
+    msg.text("NER: Overall")
+    _create_ner_table(ner_results)
+
+    if not silent:
+        for tag, tag_results in ner_results_by_tag.items():
+            if tag != "O":
+                msg.text(title=f"NER: {tag}")
+                _create_ner_table(tag_results)
+
+    return {"overall_results": ner_results, "results_by_tag": ner_results_by_tag}
+
+
 @dataclass
 class ScoredExample:
     example: Example
@@ -334,7 +376,9 @@ def evaluate_each_example(
 
 
 def _display_eval_results(
-    scores: Dict[str, Any], spans_key: str, pipe_key: str, silent: bool = False, 
+    scores: Dict[str, Any],
+    spans_key: str,
+    silent: bool = False,
 ) -> None:
     metrics = {
         "TOK": "token_acc",
@@ -371,12 +415,11 @@ def _display_eval_results(
                 results[metric] = "-"
             data[re.sub(r"[\s/]", "_", key.lower())] = scores[key]
     msg.table(results, title="Results")
+    data = handle_scores_per_type(scores, data, spans_key=spans_key, silent=silent)
 
-    #silence per-label NER scores and print them out in a table instead
-    if pipe_key != "ner":
-        data = handle_scores_per_type(scores, data, spans_key=spans_key, silent=silent)
-            
+
 #### Confusion matrix functions ####
+
 
 def _get_actual_labels(dev_examples: Iterable[Example], pipe_key: str) -> List[Any]:
     """Returns the actual labels for the specified component.
@@ -439,6 +482,7 @@ def _get_predicted_labels(
 
     return pred_labels
 
+
 def _get_cf_actual_predicted(
     nlp: Language, dev_examples: Iterable[Example], pipe_key: str
 ):
@@ -453,9 +497,7 @@ def _get_cf_actual_predicted(
         Tuple[List[Any], List[Any], List[Any]]: Tuple containing actual labels, predicted labels and labels
     """
     if pipe_key not in ["ner", "textcat"]:
-        msg.fail(
-            f"Unsupported {pipe_key} component", exits=1
-        )
+        msg.fail(f"Unsupported {pipe_key} component", exits=1)
     else:
         actual_labels = [label for label in _get_actual_labels(dev_examples, pipe_key)]
         predicted_labels = [
@@ -464,46 +506,53 @@ def _get_cf_actual_predicted(
         if pipe_key == "textcat":
             labels = set(predicted_labels).union(set(actual_labels))
         elif pipe_key == "ner":
-            actual_labels_flat = [label.split("-")[-1] for sublist in actual_labels for label in sublist]
-            predicted_labels_flat = [label.split("-")[-1] for sublist in predicted_labels for label in sublist]
+            actual_labels_flat = [
+                label.split("-")[-1] for sublist in actual_labels for label in sublist
+            ]
+            predicted_labels_flat = [
+                label.split("-")[-1]
+                for sublist in predicted_labels
+                for label in sublist
+            ]
             labels = set(predicted_labels_flat).union(set(actual_labels_flat))
-            
+
         return actual_labels, predicted_labels, list(labels)
-#######
+
+
 def _create_ner_table(results: Dict[str, Dict[str, float]]):
     """Creates a table for NER results.
 
     Args:
         results (Dict[str, Dict[str, float]]): Dictionary containing NER results.
     """
-    
-    ner_metrics = ["correct", "incorrect", "partial", "missed", "spurious", "possible", "actual", "precision", "recall", "f1"]
+
+    ner_metrics = [
+        "correct",
+        "incorrect",
+        "partial",
+        "missed",
+        "spurious",
+        "possible",
+        "actual",
+        "precision",
+        "recall",
+        "f1",
+    ]
     headers = tuple(["Metric"] + [m.capitalize() for m in ner_metrics])
 
     metrics_formatted = []
     for eval_type, metrics in results.items():
         row = [eval_type.replace("_", " ").capitalize()]
-        row.extend([round(metrics.get(key, None), 2) if metrics.get(key, None) is not None else None for key in ner_metrics])
+        row.extend(
+            [
+                (
+                    round(metrics.get(key, None), 2)
+                    if metrics.get(key, None) is not None
+                    else None
+                )
+                for key in ner_metrics
+            ]
+        )
         metrics_formatted.append(row)
-        
+
     msg.table(metrics_formatted, header=headers, divider=True)
-
-def _create_cf_array(
-    actual_labels: List[Any], predicted_labels: List[Any], labels: List[Any]
-) -> Tuple[List[List[float]], List[Any]]:
-    """Creates the confusion matrix array for the specified component.
-
-    Args:
-        actual_labels (List[Any]): List of actual labels.
-        predicted_labels (List[Any]): List of predicted labels.
-        labels (List[Any]): List of labels.
-
-    Returns:
-        Tuple[List[List[float]], List[Any]]: Tuple containing the confusion matrix array and labels
-    """
-    labels_to_include = [l for l in labels if l != "O"]    
-    cm = confusion_matrix(
-        actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
-    )
-
-    return cm, labels_to_include
