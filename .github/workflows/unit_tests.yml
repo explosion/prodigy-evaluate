@@ -16,13 +16,11 @@ jobs:
         with:
           python-version: 3.9
           cache: "pip"
-
-      # No need to checkout the Prodigy repository separately
-
       - name: Install Prodigy from private repo
         env:
           GITHUB_TOKEN: ${{ secrets.GHA_PRODIGY_READ }} # Use the secret here
         run: |
+          export GIT_LFS_SKIP_SMUDGE=1 
           pip install --upgrade pip
           pip install git+https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git@v1.14.0
 
