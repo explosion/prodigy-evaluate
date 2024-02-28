@@ -287,6 +287,8 @@ def test_nervaluate(spacy_model, dataset, db, capsys):
     
     assert results['overall_results']['ent_type']['f1'] == 1.0
     
+    db.drop_dataset(dataset)
+    
 def test_display_eval_results(scores, capsys):
     _display_eval_results(scores, "sc")
     captured = capsys.readouterr()
