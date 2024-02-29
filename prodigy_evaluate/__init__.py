@@ -129,7 +129,8 @@ def evaluate(
             disp = ConfusionMatrixDisplay(
                 confusion_matrix=cfarray, display_labels=labels_to_include
             )
-            disp.plot()
+            ax = disp.plot(colorbar=False, cmap='Blues')
+            ax.ax_.set_title('Confusion Matrix')
             plt.show()
             msg.good(f"Confusion matrix displayed")
 
