@@ -75,9 +75,9 @@ def evaluate(
     specified component. This will only work for NER or textcat components.
 
     prodigy evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
-    
+
     NOTE: Per-component evaluation sets can be provided using the eval: prefix for consistency
-    with the prodigy train command but are NOT required. 
+    with the prodigy train command but are NOT required.
     """
     set_log_level(verbose=verbose, silent=silent)
     setup_gpu(gpu_id)
@@ -103,22 +103,27 @@ def evaluate(
     scores = nlp.evaluate(dev_examples)
 
     if pipe_key in ["ner", "textcat"]:
-        actual_labels, predicted_labels, labels, flat_actual_labels, flat_predicted_labels = _get_cf_actual_predicted(
-                nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
-            )
+        (
+            actual_labels,
+            predicted_labels,
+            labels,
+            flat_actual_labels,
+            flat_predicted_labels,
+        ) = _get_cf_actual_predicted(
+            nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
+        )
         labels_to_include = [l for l in labels if l != "O"]
         if pipe_key == "ner":
             actual_labels = flat_actual_labels
             predicted_labels = flat_predicted_labels
-            
+
         cfarray = confusion_matrix(
-        actual_labels, predicted_labels, labels=labels, normalize="true"
+            actual_labels, predicted_labels, labels=labels, normalize="true"
         )
-    
+
     if label_stats:
         _display_eval_results(scores, spans_key=spans_key, silent=silent)
-    
-    
+
     if confusion_matrix:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
@@ -130,7 +135,6 @@ def evaluate(
         )
         msg.good(f"Confusion matrix displayed")
 
-    
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
@@ -191,7 +195,7 @@ def evaluate_example(
     output_path: Optional[Path] = None,
 ):
     """Evaluate a spaCy pipeline on one or more datasets for different components
-    on a per-example basis. This command will run an evaluation on each example individually 
+    on a per-example basis. This command will run an evaluation on each example individually
     and then sort by the desired `--metric` argument.
 
     This is useful for debugging and understanding the easiest
@@ -203,9 +207,9 @@ def evaluate_example(
         ```
 
     This will sort examples by lowest NER F-score.
-    
+
     NOTE: Per-component evaluation sets can be provided using the eval: prefix for consistency
-    with the prodigy train command but are NOT required. 
+    with the prodigy train command but are NOT required.
     """
     if not metric:
         raise RecipeError(
@@ -303,14 +307,18 @@ def evaluate_nervaluate(
         prodigy evaluate.nervaluate en_core_web_sm my_eval_dataset
         ```
     """
-    set_log_level(verbose=verbose, silent=True) #silence component merging
+    set_log_level(verbose=verbose, silent=True)  # silence component merging
     setup_gpu(gpu_id)
     nlp = spacy.load(model)
     merged_corpus = merge_corpus(nlp, {"ner": ([], [ner])})
     dev_examples = merged_corpus["dev"](nlp)
-    actual_labels, predicted_labels, labels, flat_actual_labels, flat_predicted_labels = _get_cf_actual_predicted(
-        nlp=nlp, dev_examples=dev_examples, pipe_key="ner"
-    )
+    (
+        actual_labels,
+        predicted_labels,
+        labels,
+        flat_actual_labels,
+        flat_predicted_labels,
+    ) = _get_cf_actual_predicted(nlp=nlp, dev_examples=dev_examples, pipe_key="ner")
 
     evaluator = Evaluator(actual_labels, predicted_labels, tags=labels, loader="list")
     ner_results, ner_results_by_tag = evaluator.evaluate()
@@ -521,37 +529,38 @@ def _get_cf_actual_predicted(
     if pipe_key == "textcat":
         labels = set(predicted_labels).union(set(actual_labels))
         return actual_labels, predicted_labels, list(labels), [], []
-        
+
     elif pipe_key == "ner":
         actual_labels_flat = [
             label.split("-")[-1] for sublist in actual_labels for label in sublist
         ]
         predicted_labels_flat = [
-            label.split("-")[-1]
-            for sublist in predicted_labels
-            for label in sublist
+            label.split("-")[-1] for sublist in predicted_labels for label in sublist
         ]
         labels = set(predicted_labels_flat).union(set(actual_labels_flat))
-    
-        return actual_labels, predicted_labels, list(labels), actual_labels_flat, predicted_labels_flat
-    
-    
-def _display_confusion_matrix(
-    cm: List[List[float]], labels: List[Any]
-) -> None:
+
+        return (
+            actual_labels,
+            predicted_labels,
+            list(labels),
+            actual_labels_flat,
+            predicted_labels_flat,
+        )
+
+
+def _display_confusion_matrix(cm: List[List[float]], labels: List[Any]) -> None:
     """Displays the confusion matrix for the specified component.
 
     Args:
         cm (List[List[float]]): Confusion matrix array
         labels (List[Any]): List of labels
     """
-    disp = ConfusionMatrixDisplay(
-                confusion_matrix=cm, display_labels=labels
-            )
-    ax = disp.plot(colorbar=False, cmap='Blues')
-    ax.ax_.set_title('Confusion Matrix')
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    ax = disp.plot(colorbar=False, cmap="Blues")
+    ax.ax_.set_title("Confusion Matrix")
     plt.show()
-            
+
+
 def _create_ner_table(results: Dict[str, Dict[str, float]]):
     """Creates a table for NER results.
 
