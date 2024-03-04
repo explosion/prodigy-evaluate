@@ -25,7 +25,6 @@ jobs:
           git clone https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git
           cd prodigy
           pip install setuptools wheel
-          pip install -r dev-requirements.txt
           pip install -e .
       - name: Install additional dependencies
         run: |
