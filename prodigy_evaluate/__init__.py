@@ -60,7 +60,7 @@ def evaluate(
     gpu_id: int = -1,
     verbose: bool = False,
     silent: bool = False,
-    confusion_matrix: bool = False,
+    cf_matrix: bool = False,
     cf_path: Optional[Path] = None,
     spans_key: str = SPANCAT_DEFAULT_KEY,
 ) -> Dict[str, Any]:
@@ -124,9 +124,8 @@ def evaluate(
 
     if label_stats:
         _display_eval_results(scores, spans_key=spans_key, silent=silent)
-    
-    
-    if confusion_matrix:
+
+    if cf_matrix:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
                 f"Confusion matrix is not supported for {pipe_key} component", exits=1
@@ -137,7 +136,6 @@ def evaluate(
         )
         msg.good(f"Confusion matrix displayed")
 
-    
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
@@ -600,4 +598,3 @@ def _create_ner_table(results: Dict[str, Dict[str, float]]):
         metrics_formatted.append(row)
 
     msg.table(metrics_formatted, header=headers, divider=True)
-

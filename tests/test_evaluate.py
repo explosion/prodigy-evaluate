@@ -342,7 +342,13 @@ def test_get_predicted_labels_ner(nlp, ner_examples):
 
 def test_get_cf_actual_predicted(nlp, ner_examples):
 
-    actual, predicted, labels = _get_cf_actual_predicted(nlp, ner_examples, "ner")
+    actual, predicted, labels, actual_flat, predicted_flat = _get_cf_actual_predicted(nlp, ner_examples, "ner")
+    assert isinstance(actual[0], list)
+    assert isinstance(actual_flat[0], str)
+    
+    assert isinstance(predicted[0], list)
+    assert isinstance(predicted_flat[1], str)
+    
     assert isinstance(actual, list)
     assert isinstance(predicted, list)
     assert isinstance(labels, list)
