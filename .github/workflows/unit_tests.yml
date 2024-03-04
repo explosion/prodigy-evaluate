@@ -24,11 +24,11 @@ jobs:
           pip install --upgrade pip
           git clone https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git
           cd prodigy
-      - name: Install dependencies
-        run: |
           pip install setuptools wheel
-          pip install -e .
           pip install -r dev-requirements.txt
+          pip install -e .
+      - name: Install additional dependencies
+        run: |
           pip install pytest
           python -m spacy download en_core_web_sm
       
