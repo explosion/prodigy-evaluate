@@ -1,0 +1,40 @@
+name: Unit Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: "pip"
+      - name: Install Prodigy from private repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHA_PRODIGY_READ }} # Use the secret here
+        run: |
+          export GIT_LFS_SKIP_SMUDGE=1 
+          pip install --upgrade pip
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git
+          cd prodigy
+          pip install setuptools wheel
+          pip install -e .
+          cd ..
+      - name: Install additional dependencies
+        run: |
+          pip install -e .
+          pip install pytest
+          python -m spacy download en_core_web_sm
+      
+      - name: Run pytest
+        if: always()
+        shell: bash
+        run: python -m pytest tests
+      
