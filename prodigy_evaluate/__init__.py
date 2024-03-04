@@ -17,6 +17,7 @@ from prodigy.errors import RecipeError
 from prodigy.util import SPANCAT_DEFAULT_KEY, msg
 from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
 from prodigy.recipes.data_utils import get_datasets_from_cli_eval, merge_corpus
+from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
 
 # additional imports
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -123,7 +124,8 @@ def evaluate(
 
     if label_stats:
         _display_eval_results(scores, spans_key=spans_key, silent=silent)
-
+    
+    
     if confusion_matrix:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
@@ -135,12 +137,12 @@ def evaluate(
         )
         msg.good(f"Confusion matrix displayed")
 
+    
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
             msg.fail(
                 f"Confusion matrix is not supported for {pipe_key} component", exits=1
             )
-
         if not cf_path.exists():
             os.makedirs(cf_path)
 
@@ -598,3 +600,4 @@ def _create_ner_table(results: Dict[str, Dict[str, float]]):
         metrics_formatted.append(row)
 
     msg.table(metrics_formatted, header=headers, divider=True)
+

@@ -22,9 +22,12 @@ jobs:
         run: |
           export GIT_LFS_SKIP_SMUDGE=1 
           pip install --upgrade pip
-          pip install git+https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git@v1.14.0
-
-      - name: Install dependencies
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/explosion/prodigy.git
+          cd prodigy
+          pip install setuptools wheel
+          pip install -e .
+          cd ..
+      - name: Install additional dependencies
         run: |
           pip install -e .
           pip install pytest
