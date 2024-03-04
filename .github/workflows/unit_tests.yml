@@ -30,6 +30,7 @@ jobs:
       - name: Install additional dependencies
         run: |
           pip install -e .
+          pip install pytest
           python -m spacy download en_core_web_sm
       
       - name: Run pytest
