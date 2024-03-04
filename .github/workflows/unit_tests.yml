@@ -28,6 +28,7 @@ jobs:
           pip install -e .
       - name: Install additional dependencies
         run: |
+          pip install "prodigy-evaluate @ git+https://github.com/explosion/prodigy-evaluate.git@2_setup"
           pip install pytest
           python -m spacy download en_core_web_sm
       
