@@ -76,9 +76,6 @@ def evaluate(
     specified component. This will only work for NER or textcat components.
 
     prodigy evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
-
-    NOTE: Per-component evaluation sets can be provided using the eval: prefix for consistency
-    with the prodigy train command but are NOT required.
     """
     set_log_level(verbose=verbose, silent=silent)
     setup_gpu(gpu_id)
@@ -207,9 +204,6 @@ def evaluate_example(
         ```
 
     This will sort examples by lowest NER F-score.
-
-    NOTE: Per-component evaluation sets can be provided using the eval: prefix for consistency
-    with the prodigy train command but are NOT required.
     """
     if not metric:
         raise RecipeError(

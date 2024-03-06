@@ -4,7 +4,7 @@
 
 This repository contains a Prodigy plugin for recipes to evaluate spaCy pipelines. It features multiple recipes:
 
-1. `evaluate.evaluate`: Evaluate a spaCy pipeline on one or more datasets for different components. Per-component evaluation sets can be provided using the `eval:` prefix for consistency. Passing flags like `--label-stats` or `--confusion-matrix` will compute a variety of evaluation metrics, including precision, recall, F1, accuracy, and more. 
+1. `evaluate.evaluate`: Evaluate a spaCy pipeline on one or more datasets for different components. Passing flags like `--label-stats` or `--confusion-matrix` will compute a variety of evaluation metrics, including precision, recall, F1, accuracy, and more. 
 
 <p align="center">
   <img src="images/example.gif" width="75%">
