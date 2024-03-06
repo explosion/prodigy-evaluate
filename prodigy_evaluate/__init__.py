@@ -75,7 +75,7 @@ def evaluate(
     Finally, you can also use --confusion-matrix to show the confusion matrix for the
     specified component. This will only work for NER or textcat components.
 
-    prodigy evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
+    prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
     """
     set_log_level(verbose=verbose, silent=silent)
     setup_gpu(gpu_id)
@@ -116,7 +116,7 @@ def evaluate(
             predicted_labels = flat_predicted_labels
 
         cfarray = confusion_matrix(
-            actual_labels, predicted_labels, labels=labels, normalize="true"
+            actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
         )
 
     if label_stats:
@@ -200,7 +200,7 @@ def evaluate_example(
 
     Example Usage:
         ```
-        prodigy evaluate-example en_core_web_sm --ner my_eval_dataset --metric ents_f
+        prodigy evaluate.evaluate-example en_core_web_sm --ner my_eval_dataset --metric ents_f
         ```
 
     This will sort examples by lowest NER F-score.
