@@ -146,7 +146,7 @@ def evaluate(
             full_cf_path,
             {
                 "cf_array": cfarray,
-                "labels": labels,
+                "labels": labels_to_include,
             },
         )
         msg.good(f"Confusion matrix array saved to {full_cf_path}")
@@ -298,7 +298,7 @@ def evaluate_nervaluate(
     Example Usage:
 
         ```
-        prodigy evaluate.nervaluate en_core_web_sm my_eval_dataset
+        prodigy evaluate.nervaluate en_core_web_sm --ner my_eval_dataset
         ```
     """
     set_log_level(verbose=verbose, silent=True)  # silence component merging
