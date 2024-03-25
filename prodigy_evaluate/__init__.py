@@ -59,7 +59,7 @@ def evaluate(
     label_stats: bool = False,
     gpu_id: int = -1,
     verbose: bool = False,
-    silent: bool = False,
+    silent: bool = True,
     cf_matrix: bool = False,
     cf_path: Optional[Path] = None,
     spans_key: str = SPANCAT_DEFAULT_KEY,
@@ -76,8 +76,9 @@ def evaluate(
     specified component. This will only work for NER or textcat components.
 
     Example Usage:
+    
         ```
-        prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
+        prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --confusion-matrix
         ```
     """
     set_log_level(verbose=verbose, silent=silent)
@@ -121,9 +122,8 @@ def evaluate(
         cfarray = confusion_matrix(
             actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
         )
-
-    if label_stats:
-        _display_eval_results(scores, spans_key=spans_key, silent=silent)
+    
+    _display_eval_results(scores, spans_key=spans_key, silent=False, per_type=label_stats)
 
     if cf_matrix:
         if pipe_key not in ["ner", "textcat"]:
@@ -148,7 +148,7 @@ def evaluate(
         srsly.write_json(
             full_cf_path,
             {
-                "cf_array": cfarray,
+                "cf_array": cfarray.tolist(),
                 "labels": labels_to_include,
             },
         )
@@ -189,7 +189,7 @@ def evaluate_example(
     coref: Sequence[str] = tuple(),
     gpu_id: int = -1,
     verbose: bool = False,
-    silent: bool = False,
+    silent: bool = True,
     metric: Optional[str] = None,
     n_results: int = 10,
     output_path: Optional[Path] = None,
@@ -415,7 +415,7 @@ def evaluate_each_example(
 
 
 def _display_eval_results(
-    scores: Dict[str, Any], spans_key: str, silent: bool = False
+    scores: Dict[str, Any], spans_key: str, silent: bool = False, per_type: bool = False
 ) -> None:
     """Displays the evaluation results for the specified component.
 
@@ -459,7 +459,9 @@ def _display_eval_results(
                 results[metric] = "-"
             data[re.sub(r"[\s/]", "_", key.lower())] = scores[key]
     msg.table(results, title="Results")
-    data = handle_scores_per_type(scores, data, spans_key=spans_key, silent=silent)
+    
+    if per_type: 
+        data = handle_scores_per_type(scores, data, spans_key=spans_key, silent=silent)
 
 
 #### Confusion matrix functions ####
