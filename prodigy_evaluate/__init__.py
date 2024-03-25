@@ -75,7 +75,10 @@ def evaluate(
     Finally, you can also use --confusion-matrix to show the confusion matrix for the
     specified component. This will only work for NER or textcat components.
 
-    prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
+    Example Usage:
+        ```
+        prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --label-stats --confusion-matrix
+        ```
     """
     set_log_level(verbose=verbose, silent=silent)
     setup_gpu(gpu_id)
