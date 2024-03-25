@@ -1,23 +1,21 @@
 from typing import Dict, Iterable, List
 
-import pytest
-
-from spacy.training import Example
 import en_core_web_sm
-
-from prodigy.types import TaskType
+import pytest
 from prodigy.components.db import connect
+from prodigy.types import TaskType
+from spacy.training import Example
 
 from prodigy_evaluate import (
+    _create_ner_table,
     _display_eval_results,
+    _get_actual_labels,
+    _get_cf_actual_predicted,
+    _get_predicted_labels,
     _get_score_for_metric,
     evaluate,
     evaluate_example,
     evaluate_nervaluate,
-    _get_actual_labels,
-    _get_predicted_labels,
-    _get_cf_actual_predicted,
-    _create_ner_table
 )
 
 
@@ -185,54 +183,65 @@ def textcat_examples(nlp):
 
     return examples
 
+
 @pytest.fixture
 def nervaluate_results():
-    return {'ent_type': {'correct': 2,
-  'incorrect': 0,
-  'partial': 0,
-  'missed': 1,
-  'spurious': 0,
-  'possible': 3,
-  'actual': 2,
-  'precision': 1.0,
-  'recall': 0.6666666666666666,
-  'f1': 0.8},
- 'partial': {'correct': 2,
-  'incorrect': 0,
-  'partial': 0,
-  'missed': 1,
-  'spurious': 0,
-  'possible': 3,
-  'actual': 2,
-  'precision': 1.0,
-  'recall': 0.6666666666666666,
-  'f1': 0.8},
- 'strict': {'correct': 2,
-  'incorrect': 0,
-  'partial': 0,
-  'missed': 1,
-  'spurious': 0,
-  'possible': 3,
-  'actual': 2,
-  'precision': 1.0,
-  'recall': 0.6666666666666666,
-  'f1': 0.8},
- 'exact': {'correct': 2,
-  'incorrect': 0,
-  'partial': 0,
-  'missed': 1,
-  'spurious': 0,
-  'possible': 3,
-  'actual': 2,
-  'precision': 1.0,
-  'recall': 0.6666666666666666,
-  'f1': 0.8}}
+    return {
+        "ent_type": {
+            "correct": 2,
+            "incorrect": 0,
+            "partial": 0,
+            "missed": 1,
+            "spurious": 0,
+            "possible": 3,
+            "actual": 2,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+        },
+        "partial": {
+            "correct": 2,
+            "incorrect": 0,
+            "partial": 0,
+            "missed": 1,
+            "spurious": 0,
+            "possible": 3,
+            "actual": 2,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+        },
+        "strict": {
+            "correct": 2,
+            "incorrect": 0,
+            "partial": 0,
+            "missed": 1,
+            "spurious": 0,
+            "possible": 3,
+            "actual": 2,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+        },
+        "exact": {
+            "correct": 2,
+            "incorrect": 0,
+            "partial": 0,
+            "missed": 1,
+            "spurious": 0,
+            "possible": 3,
+            "actual": 2,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+        },
+    }
+
 
 ######## evaluation tests ########
 
 
 def test_evaluate_example(spacy_model, dataset, metric, db, capsys):
-
     evaluate_example(model=spacy_model, ner=dataset, metric=metric, n_results=5)
 
     captured = capsys.readouterr()
@@ -243,12 +252,11 @@ def test_evaluate_example(spacy_model, dataset, metric, db, capsys):
 
 
 def test_evaluate(spacy_model, dataset, db, capsys):
-
     results = evaluate(
         model=spacy_model,
         ner=dataset,
         label_stats=True,
-        cf_matrix=False, #False 
+        cf_matrix=False,  # False
     )
 
     captured = capsys.readouterr()
@@ -265,14 +273,15 @@ def test_evaluate(spacy_model, dataset, db, capsys):
     assert results.get("speed") > 1
 
     db.drop_dataset(dataset)
-    
+
+
 def test_nervaluate(spacy_model, dataset, db, capsys):
     results = evaluate_nervaluate(
         model=spacy_model,
         ner=dataset,
     )
     captured = capsys.readouterr()
-    
+
     assert "Correct" in captured.out
     assert "Metric" in captured.out
     assert "Ent type" in captured.out
@@ -280,20 +289,22 @@ def test_nervaluate(spacy_model, dataset, db, capsys):
     assert "Recall" in captured.out
     assert "F1" in captured.out
     assert "Partial" in captured.out
-    
+
     assert isinstance(results, dict)
-    assert "ent_type" in list(results['overall_results'].keys())
-    assert "partial" in results['overall_results']
-    
-    assert results['overall_results']['ent_type']['f1'] == 1.0
-    
+    assert "ent_type" in list(results["overall_results"].keys())
+    assert "partial" in results["overall_results"]
+
+    assert results["overall_results"]["ent_type"]["f1"] == 1.0
+
     db.drop_dataset(dataset)
-    
+
+
 def test_display_eval_results(scores, capsys):
     _display_eval_results(scores, "sc")
     captured = capsys.readouterr()
 
     assert "Results" in captured.out
+
 
 def test_get_score_for_metric(scores, metric: str):
     res = _get_score_for_metric(scores, metric)
@@ -305,7 +316,6 @@ def test_get_score_for_metric(scores, metric: str):
 
 
 def test_get_actual_labels_ner(ner_examples):
-
     ner_labels = _get_actual_labels(ner_examples, "ner")
     assert isinstance(ner_labels, list)
     assert len(ner_labels) == 2
@@ -317,7 +327,6 @@ def test_get_actual_labels_ner(ner_examples):
 
 
 def test_get_actual_labels_textcat(textcat_examples):
-
     textcat_labels = _get_actual_labels(textcat_examples, "textcat")
     assert isinstance(textcat_labels, list)
     assert len(textcat_labels) == 2
@@ -329,36 +338,37 @@ def test_get_actual_labels_textcat(textcat_examples):
 # here we need a model as we're using one in _get_predicted_labels
 # because nlp.evaluate does not create example.predicted values
 def test_get_predicted_labels_ner(nlp, ner_examples):
-
     pred_ner_labels = _get_predicted_labels(nlp, ner_examples, "ner")
     assert isinstance(pred_ner_labels, list)
     assert len(pred_ner_labels) == 2
     assert all(isinstance(label, str) for label in pred_ner_labels[0])
     assert all(isinstance(label, str) for label in pred_ner_labels[1])
-    
+
     assert "O" in pred_ner_labels[1]
     assert "B-ORG" in pred_ner_labels[0]
 
 
 def test_get_cf_actual_predicted(nlp, ner_examples):
-
-    actual, predicted, labels, actual_flat, predicted_flat = _get_cf_actual_predicted(nlp, ner_examples, "ner")
+    actual, predicted, labels, actual_flat, predicted_flat = _get_cf_actual_predicted(
+        nlp, ner_examples, "ner"
+    )
     assert isinstance(actual[0], list)
     assert isinstance(actual_flat[0], str)
-    
+
     assert isinstance(predicted[0], list)
     assert isinstance(predicted_flat[1], str)
-    
+
     assert isinstance(actual, list)
     assert isinstance(predicted, list)
     assert isinstance(labels, list)
     assert "O" in actual[0]
     assert "B-ORG" in predicted[1]
 
+
 def test_create_ner_table(nervaluate_results, capsys):
     _create_ner_table(nervaluate_results)
     captured = capsys.readouterr()
-    
+
     assert "Correct" in captured.out
     assert "Metric" in captured.out
     assert "Ent type" in captured.out
