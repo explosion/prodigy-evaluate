@@ -28,7 +28,7 @@ jobs:
       - name: Run ruff
         if: always()
         shell: bash
-        run: python -m ruff --fix prodigy_evaluate/ tests/
+        run: python -m ruff check prodigy_evaluate/ tests/ --fix
 
       - name: Run black
         if: always()

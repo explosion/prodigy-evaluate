@@ -17,7 +17,6 @@ from prodigy.errors import RecipeError
 from prodigy.util import SPANCAT_DEFAULT_KEY, msg
 from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
 from prodigy.recipes.data_utils import get_datasets_from_cli_eval, merge_corpus
-from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
 
 # additional imports
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -76,7 +75,7 @@ def evaluate(
     specified component. This will only work for NER or textcat components.
 
     Example Usage:
-    
+
         ```
         prodigy evaluate.evaluate en_core_web_sm --ner my_eval_dataset --confusion-matrix
         ```
@@ -114,7 +113,7 @@ def evaluate(
         ) = _get_cf_actual_predicted(
             nlp=nlp, dev_examples=dev_examples, pipe_key=pipe_key
         )
-        labels_to_include = [l for l in labels if l != "O"]
+        labels_to_include = [label for label in labels if label != "O"]
         if pipe_key == "ner":
             actual_labels = flat_actual_labels
             predicted_labels = flat_predicted_labels
@@ -122,8 +121,10 @@ def evaluate(
         cfarray = confusion_matrix(
             actual_labels, predicted_labels, labels=labels_to_include, normalize="true"
         )
-    
-    _display_eval_results(scores, spans_key=spans_key, silent=False, per_type=label_stats)
+
+    _display_eval_results(
+        scores, spans_key=spans_key, silent=False, per_type=label_stats
+    )
 
     if cf_matrix:
         if pipe_key not in ["ner", "textcat"]:
@@ -134,7 +135,7 @@ def evaluate(
             cm=cfarray,
             labels=labels_to_include,
         )
-        msg.good(f"Confusion matrix displayed")
+        msg.good("Confusion matrix displayed")
 
     if cf_path:
         if pipe_key not in ["ner", "textcat"]:
@@ -459,8 +460,8 @@ def _display_eval_results(
                 results[metric] = "-"
             data[re.sub(r"[\s/]", "_", key.lower())] = scores[key]
     msg.table(results, title="Results")
-    
-    if per_type: 
+
+    if per_type:
         data = handle_scores_per_type(scores, data, spans_key=spans_key, silent=silent)
 
 
