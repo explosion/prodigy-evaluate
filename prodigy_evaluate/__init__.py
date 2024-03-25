@@ -240,16 +240,37 @@ def evaluate_example(
         msg.warn(
             f"Average # of characters of top examples is {round(avg_text_len, 2)}. This will not display well in the terminal. Consider saving the top examples to file with `--output-path` and investigating accordingly."
         )
+
+    def split_string_into_tuples(input_string: str, length: int = 50):
+        """
+        This function takes a string and splits it into tuples of length `length`.
+        Useful for wrapping long strings in tables.
+        """
+        input_string = input_string.rstrip()
+        if len(input_string) > length:
+            result = tuple(
+                input_string[i : i + length].rstrip()
+                for i in range(0, len(input_string), length)
+            )
+            return result
+        else:
+            return input_string
+
     data = [
-        (ex.example.text, round(ex.score, 2) if ex.score is not None else None)
+        (
+            split_string_into_tuples(ex.example.text),
+            round(ex.score, 2) if ex.score is not None else None,
+        )
         for ex in top_results
     ]
     headers = ["Example", metric]
-    widths = (max([len(d[0]) for d in data]), 9)
+    widths = (50, 9)
     aligns = ("l", "l")
 
     msg.divider("Scored Examples")
-    msg.table(data, header=headers, divider=True, widths=widths, aligns=aligns)
+    msg.table(
+        data, header=headers, divider=True, widths=widths, aligns=aligns, multiline=True
+    )
 
     if output_path:
         if not output_path.exists():
