@@ -6,10 +6,17 @@ from prodigy.components.db import connect
 from prodigy.types import TaskType
 from spacy.training import Example
 
-from prodigy_evaluate import (_create_ner_table, _display_eval_results,
-                              _get_actual_labels, _get_cf_actual_predicted,
-                              _get_predicted_labels, _get_score_for_metric,
-                              evaluate, evaluate_example, evaluate_nervaluate)
+from prodigy_evaluate import (
+    _create_ner_table,
+    _display_eval_results,
+    _get_actual_labels,
+    _get_cf_actual_predicted,
+    _get_predicted_labels,
+    _get_score_for_metric,
+    evaluate,
+    evaluate_example,
+    evaluate_nervaluate,
+)
 
 
 @pytest.fixture
