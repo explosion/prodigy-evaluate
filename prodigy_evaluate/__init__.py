@@ -292,7 +292,7 @@ def evaluate_example(
         srsly.write_jsonl(results_path, results_jsonl)
         msg.good(f"The examples with the lowest scores saved to {results_path}")
         msg.info(
-            f"You can inspect the NER/spancat/textcat predictions on the hardest examples by running one of the Prodigy `*.correct` or `*.model-annotate` workflows. See documentation for more details: https://prodi.gy/docs/recipes"
+            "You can inspect the NER/spancat/textcat predictions on the hardest examples by running one of the Prodigy `*.correct` or `*.model-annotate` workflows. See documentation for more details: https://prodi.gy/docs/recipes"
         )
 
 
