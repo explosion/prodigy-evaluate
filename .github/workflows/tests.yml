@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Tests
 
 on:
   pull_request:
@@ -32,9 +32,25 @@ jobs:
           pip install -e .
           pip install pytest
           python -m spacy download en_core_web_sm
+          pip install ruff black isort
       
       - name: Run pytest
         if: always()
         shell: bash
         run: python -m pytest tests
+      
+      - name: Run ruff
+        if: always()
+        shell: bash
+        run: python -m ruff check prodigy_evaluate/ tests/ 
+
+      - name: Run black
+        if: always()
+        shell: bash
+        run: python -m black --check prodigy_evaluate/ tests/
+    
+      - name: Run isort
+        if: always()
+        shell: bash
+        run: python -m isort prodigy_evaluate/ tests/
       
