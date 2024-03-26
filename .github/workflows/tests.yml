@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Tests
 
 on:
   pull_request:
@@ -37,4 +37,19 @@ jobs:
         if: always()
         shell: bash
         run: python -m pytest tests
+      
+      - name: Run ruff
+        if: always()
+        shell: bash
+        run: python -m ruff check prodigy_evaluate/ tests/ --fix
+
+      - name: Run black
+        if: always()
+        shell: bash
+        run: python -m black prodigy_evaluate/ tests/
+    
+      - name: Run isort
+        if: always()
+        shell: bash
+        run: python -m isort prodigy_evaluate/ tests/
       
