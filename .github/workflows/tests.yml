@@ -42,12 +42,12 @@ jobs:
       - name: Run ruff
         if: always()
         shell: bash
-        run: python -m ruff check prodigy_evaluate/ tests/ --fix
+        run: python -m ruff check prodigy_evaluate/ tests/ 
 
       - name: Run black
         if: always()
         shell: bash
-        run: python -m black prodigy_evaluate/ tests/
+        run: python -m black --check prodigy_evaluate/ tests/
     
       - name: Run isort
         if: always()
