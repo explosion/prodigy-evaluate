@@ -4,24 +4,23 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
+import matplotlib.pyplot as plt
 import spacy
 import srsly
+from nervaluate import Evaluator
+from prodigy.core import recipe
+from prodigy.errors import RecipeError
+from prodigy.recipes.data_utils import get_datasets_from_cli_eval, merge_corpus
+from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
+from prodigy.util import SPANCAT_DEFAULT_KEY, msg
 from radicli import Arg
+
+# additional imports
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from spacy.cli.evaluate import handle_scores_per_type
 from spacy.language import Language
 from spacy.training import offsets_to_biluo_tags
 from spacy.training.example import Example
-
-from prodigy.core import recipe
-from prodigy.errors import RecipeError
-from prodigy.util import SPANCAT_DEFAULT_KEY, msg
-from prodigy.recipes.train import RECIPE_ARGS, set_log_level, setup_gpu
-from prodigy.recipes.data_utils import get_datasets_from_cli_eval, merge_corpus
-
-# additional imports
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-import matplotlib.pyplot as plt
-from nervaluate import Evaluator
 
 
 @recipe(
